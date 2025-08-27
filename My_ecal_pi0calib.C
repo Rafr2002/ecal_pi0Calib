@@ -72,7 +72,7 @@ void best_pair_cuts(
     }
 }
 
-void ecal_pi0calib(int run_start, int run_end) {
+void My_ecal_pi0calib(int run_start, int run_end) {
     const Double_t z_calo = 6; // position of calorimeter from the target in m
     const Double_t z_target = 0.09;    // position of target
     const Double_t z_origin = 0.0;

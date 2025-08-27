@@ -72,7 +72,7 @@ void best_pair_cuts(
     }
 }
 
-void ecal_pi0calib(int run_start, int run_end) {
+void DJ_ecal_pi0calib(int run_start, int run_end) {
     const Double_t z_calo = 6; // position of calorimeter from the target in m
     const Double_t z_target = 0.09;    // position of target
     const Double_t z_origin = 0.0;
@@ -158,13 +158,6 @@ void ecal_pi0calib(int run_start, int run_end) {
     ch->AddBranchToCache("earm.ecal.ngoodADChits",kTRUE);
     TH1F *h_pi0_mass = new TH1F("h_pi0_mass", "Pi0 Invariant Mass;M_{#pi^{0}} [GeV];Events", 80, 0, 0.6);
     TH1F *h_pi0_mass_corr = new TH1F("h_pi0_mass_reco", "Reconstructed #pi^{0} Invariant Mass;M_{#pi^{0}} [GeV];Events", 80, 0, 0.6);
-
-    //Pi0 energy spectra
-    TH1F *h_Epi0      = new TH1F("h_Epi0",
-    "Pi^{0} Energy;E_{#pi^{0}} [GeV];Events", 140, 0, 14);
-    TH1F *h_Epi0_corr = new TH1F("h_Epi0_corr",
-    "Reconstructed Pi^{0} Energy;E_{#pi^{0}} [GeV];Events", 140, 0, 14);
-
 
     Long64_t nEvents = ch->GetEntries();
     cout << "Number of events: " << nEvents << endl;
@@ -287,17 +280,13 @@ void ecal_pi0calib(int run_start, int run_end) {
 
             Double_t opening_angle = dir1.Angle(dir2) * (180.0 / TMath::Pi());
 	    hAngle->Fill(opening_angle);
-            // if (opening_angle < 3.5 || opening_angle > 15) continue;  // The lower cut (e.g., < 6°) removes nearly collinear photon pairs → likely merged.
+            if (opening_angle < 3.5 || opening_angle > 15) continue;  // The lower cut (e.g., < 6°) removes nearly collinear photon pairs → likely merged.
                                                                     // The upper cut (e.g., > 80°) removes highly unphysical, possibly misreconstructed pairs.
 	    hAngleCut->Fill(opening_angle);
 	    
             if (pi0_mass < 0.02 || pi0_mass > 0.6) continue;
             pass_mass++;
             h_pi0_mass->Fill(pi0_mass);
-
-            double Epi0 = (ph1 + ph2).E(); // == ecal_e[best_icl] + ecal_e[best_jcl]
-            h_Epi0->Fill(Epi0);
-
 
             // compute expected total π0 energy as using the scale factor
             //double pi0_mass_smeared = gRandom->Gaus(pi0_mass_pdg, 0.005); // 5 MeV width max
@@ -477,8 +466,8 @@ void ecal_pi0calib(int run_start, int run_end) {
 
             Double_t opening_angle = dir1.Angle(dir2) * (180.0 / TMath::Pi());
             // if (opening_angle < 3.5 || opening_angle > 8) continue;  // The lower cut (e.g., < 6°) removes nearly collinear photon pairs → likely merged.
-            // if (opening_angle < 3.5 || opening_angle > 15) continue;  // The lower cut (e.g., < 6°) removes nearly collinear photon pairs → likely merged.
-            // The upper cut (e.g., > 80°) removes highly unphysical, possibly misreconstructed pairs.
+            if (opening_angle < 3.5 || opening_angle > 15) continue;  // The lower cut (e.g., < 6°) removes nearly collinear photon pairs → likely merged.
+                                                                    // The upper cut (e.g., > 80°) removes highly unphysical, possibly misreconstructed pairs.
 
             if (pi0_mass_corr <= 0.02 || pi0_mass_corr >= 0.4) continue;    // Making a cut on the pi0 mass, e.g., between 0.06 and 0.6 GeV
 
@@ -574,109 +563,87 @@ void ecal_pi0calib(int run_start, int run_end) {
 
             if (pi0_mass_corr <= 0.02 || pi0_mass_corr >= 0.4) continue;    // Making a cut on the pi0 mass, e.g., between 0.06 and 0.6 GeV
             h_pi0_mass_corr->Fill(pi0_mass_corr);
-            
-            //fill pi0 E after
-            double Epi0_corr = (ph1_corr + ph2_corr).E(); // == e_corr[0] + e_corr[1]
-            h_Epi0_corr->Fill(Epi0_corr);
         }
     }
 
     // -------------------- Plotting --------------------
-    // TCanvas *c = new TCanvas("c","Reconstructed #pi^{0} Invariant Mass Before and After Calibration", 800,600);
-    // h_pi0_mass->SetStats(0);
-    // h_pi0_mass_corr->SetStats(0);
-    // h_pi0_mass->GetXaxis()->SetTitle("M_{#pi^{0}} [GeV]");
-    // h_pi0_mass->GetYaxis()->SetTitle("Events");
-    // h_pi0_mass->SetLineWidth(2);
-    // h_pi0_mass_corr->SetLineWidth(2);
-    // h_pi0_mass->SetLineColor(kBlue);
-    // h_pi0_mass_corr->SetLineColor(kRed);
-    // h_pi0_mass_corr->Draw();
-    // h_pi0_mass->Draw("SAME");
-    // auto leg = new TLegend(0.6,0.7,0.9,0.9);
-    // leg->AddEntry(h_pi0_mass,      "Before calib", "l");
-    // leg->AddEntry(h_pi0_mass_corr, "After calib",  "l");
-    // leg->Draw();
-    // c->SaveAs(Form("plots/ecal_pi0_mass_calib_noiter%i_%i.png",run_start,run_end));
+    TCanvas *c = new TCanvas("c","Reconstructed #pi^{0} Invariant Mass Before and After Calibration", 800,600);
+    h_pi0_mass->SetStats(0);
+    h_pi0_mass_corr->SetStats(0);
+    h_pi0_mass->GetXaxis()->SetTitle("M_{#pi^{0}} [GeV]");
+    h_pi0_mass->GetYaxis()->SetTitle("Events");
+    h_pi0_mass->SetLineWidth(2);
+    h_pi0_mass_corr->SetLineWidth(2);
+    h_pi0_mass->SetLineColor(kBlue);
+    h_pi0_mass_corr->SetLineColor(kRed);
+    h_pi0_mass_corr->Draw();
+    h_pi0_mass->Draw("SAME");
+    auto leg = new TLegend(0.6,0.7,0.9,0.9);
+    leg->AddEntry(h_pi0_mass,      "Before calib", "l");
+    leg->AddEntry(h_pi0_mass_corr, "After calib",  "l");
+    leg->Draw();
+    c->SaveAs(Form("plots/ecal_pi0_mass_calib_noiter%i_%i.png",run_start,run_end));
 
 
-    // // Create a 2D histogram to visualize calibration coefficients in the detector geometry
-    // TH2F *h_coeff_map = new TH2F("h_coeff_map", "ECAL Block Calibration Coefficients;Column;Row",
-    //     ncol, minCol, maxCol + 1l,
-    //     nlin, minRow, maxRow + 1);
-    // TGraph *gr = new TGraph();
-    // TH1D *hCoeff = new TH1D("hCoeff","Calibration Coefficient Distribution",100,0,10);
-    // // Fill the 2D histogram using the coeff[] array 
-    // for (int i = 0; i < nblocks; ++i) {
-    //     int blockID = idx_to_blockID[i];
-    //     int row = blockID_to_row[blockID];
-    //     int col = blockID_to_col[blockID];
-    //     double val = coeff[i];
-    //     h_coeff_map->SetBinContent(col - minCol + 1, row - minRow + 1, val);  // ROOT bins start from 1
-	// gr->SetPoint(i,blockID,val);
-	// hCoeff->Fill(val);
-    // }
-    // cout << "\n -----  Summary of the cuts -----" << endl;
-    // cout<<"Events passing number of clusters cut after calib: "<<pass_clus_corr<<endl;
-    // //cout<<"Events passing deltaR cut after calib: "<<pass_deltar_corr<<endl;
-    // cout<<"Events passing time cut after calib: "<<pass_time_corr<<endl;
-    // cout<<"Events passing all cuts after calib: "<<pass_mass_corr<<endl;
+    // Create a 2D histogram to visualize calibration coefficients in the detector geometry
+    TH2F *h_coeff_map = new TH2F("h_coeff_map", "ECAL Block Calibration Coefficients;Column;Row",
+        ncol, minCol, maxCol + 1l,
+        nlin, minRow, maxRow + 1);
+    TGraph *gr = new TGraph();
+    TH1D *hCoeff = new TH1D("hCoeff","Calibration Coefficient Distribution",100,0,10);
+    // Fill the 2D histogram using the coeff[] array 
+    for (int i = 0; i < nblocks; ++i) {
+        int blockID = idx_to_blockID[i];
+        int row = blockID_to_row[blockID];
+        int col = blockID_to_col[blockID];
+        double val = coeff[i];
+        h_coeff_map->SetBinContent(col - minCol + 1, row - minRow + 1, val);  // ROOT bins start from 1
+	gr->SetPoint(i,blockID,val);
+	hCoeff->Fill(val);
+    }
+    cout << "\n -----  Summary of the cuts -----" << endl;
+    cout<<"Events passing number of clusters cut after calib: "<<pass_clus_corr<<endl;
+    //cout<<"Events passing deltaR cut after calib: "<<pass_deltar_corr<<endl;
+    cout<<"Events passing time cut after calib: "<<pass_time_corr<<endl;
+    cout<<"Events passing all cuts after calib: "<<pass_mass_corr<<endl;
 
-    // cout<<"-------------------- Difference between before and after calib -------------------"<<endl;
-    // cout << "Before calib: mean = " << h_pi0_mass->GetMean() 
-    //     << ", sigma = " << h_pi0_mass->GetRMS() << endl;
-    // cout << "After calib:  mean = " << h_pi0_mass_corr->GetMean() 
-    //     << ", sigma = " << h_pi0_mass_corr->GetRMS() << endl;
+    cout<<"-------------------- Difference between before and after calib -------------------"<<endl;
+    cout << "Before calib: mean = " << h_pi0_mass->GetMean() 
+        << ", sigma = " << h_pi0_mass->GetRMS() << endl;
+    cout << "After calib:  mean = " << h_pi0_mass_corr->GetMean() 
+        << ", sigma = " << h_pi0_mass_corr->GetRMS() << endl;
 
-    // // Draw the map
-    // TCanvas *c_map = new TCanvas("c_map", "ECAL Coefficients Heatmap", 1600, 900);
-    // c_map->Divide(2,2);
-    // c_map->cd(1);
-    // h_coeff_map->SetStats(0);
-    // h_coeff_map->Draw("COLZ");
-    // c_map->cd(2);
-    // gr->SetTitle("Calibration Coefficients vs. Block ID");
-    // gr->SetMarkerStyle(6);
-    // gr->Draw("ap");
-    // gr->GetXaxis()->SetTitle("Block ID");
-    // gr->GetYaxis()->SetTitle("Coefficient");
-    // gPad->Update();
-    // c_map->cd(3);
-    // hCoeff->Draw();
-    // c_map->cd(4);
-    // hEvsE->Draw("colz");
-    // c_map->SaveAs(Form("plots/ecal_coefficients_heatmap_noiter%i_%i.png",run_start,run_end));
-    // TCanvas *cDt = new TCanvas("cDt","Photon Differences",0,0,1600,900);
-    // cDt->Divide(2,2);
-    // cDt->cd(1);
-    // hBestDt->Draw();
-    // cDt->cd(2);
-    // hBestDx->Draw();
-    // cDt->cd(3);
-    // hAngle->Draw();
-    // hAngleCut->Draw("sames");
-    // cout<<UncalibratedCh.size()<<" uncalibrated channels:"<<endl;
-    // cDt->cd(4);
-    // hBestDE->Draw();
-    // cDt->SaveAs(Form("plots/randomPlots%i_%i.png",run_start,run_end));
-
-
-    TCanvas *cE = new TCanvas("cE","Pi0 Energy Before/After Calibration",800,600);
-    h_Epi0->SetStats(0);        h_Epi0_corr->SetStats(0);
-    h_Epi0->SetLineWidth(2);    h_Epi0_corr->SetLineWidth(2);
-    h_Epi0->SetLineColor(kBlue);
-    h_Epi0_corr->SetLineColor(kRed);
-
-    h_Epi0_corr->Draw();        // draw after-calib first
-    h_Epi0->Draw("SAME");
-
-    auto legE = new TLegend(0.6,0.7,0.9,0.9);
-    legE->AddEntry(h_Epi0,      "Before calib", "l");
-    legE->AddEntry(h_Epi0_corr, "After calib",  "l");
-    legE->Draw();
-
-    cE->SaveAs(Form("plots/ecal_pi0_energy_%i_%i.png",run_start,run_end));
-
+    // Draw the map
+    TCanvas *c_map = new TCanvas("c_map", "ECAL Coefficients Heatmap", 1600, 900);
+    c_map->Divide(2,2);
+    c_map->cd(1);
+    h_coeff_map->SetStats(0);
+    h_coeff_map->Draw("COLZ");
+    c_map->cd(2);
+    gr->SetTitle("Calibration Coefficients vs. Block ID");
+    gr->SetMarkerStyle(6);
+    gr->Draw("ap");
+    gr->GetXaxis()->SetTitle("Block ID");
+    gr->GetYaxis()->SetTitle("Coefficient");
+    gPad->Update();
+    c_map->cd(3);
+    hCoeff->Draw();
+    c_map->cd(4);
+    hEvsE->Draw("colz");
+    c_map->SaveAs(Form("plots/ecal_coefficients_heatmap_noiter%i_%i.png",run_start,run_end));
+    TCanvas *cDt = new TCanvas("cDt","Photon Differences",0,0,1600,900);
+    cDt->Divide(2,2);
+    cDt->cd(1);
+    hBestDt->Draw();
+    cDt->cd(2);
+    hBestDx->Draw();
+    cDt->cd(3);
+    hAngle->Draw();
+    hAngleCut->Draw("sames");
+    cout<<UncalibratedCh.size()<<" uncalibrated channels:"<<endl;
+    cDt->cd(4);
+    hBestDE->Draw();
+    cDt->SaveAs(Form("plots/randomPlots%i_%i.png",run_start,run_end));
     for(int val : UncalibratedCh)cout<<val<<", ";
     cout<<endl;
 }
