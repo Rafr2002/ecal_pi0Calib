@@ -31,12 +31,12 @@ using namespace std;
 
 const double pi0_mass_pdg = 0.1349766;  // PDG pi0 mass in GeV
 
-    const Double_t z_calo = 6; // position of calorimeter from the target in m
-    const Double_t z_target = 0.09;    // position of target
-    const Double_t z_origin = 0.0;
-    const Double_t vertex_z = z_target - z_origin;  // position of vertex, where the pi0 is created, right in the middle of the target
+const Double_t z_calo = 6; // position of calorimeter from the target in m
+const Double_t z_target = 0.09;    // position of target
+const Double_t z_origin = 0.0;
+const Double_t vertex_z = z_target - z_origin;  // position of vertex, where the pi0 is created, right in the middle of the target
 
-    TVector3 vertex(0,0,z_target);
+TVector3 vertex(0,0,z_target);
 
 
 // 
@@ -373,7 +373,8 @@ void best_pair_chi2(
     }
 }
 
-void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
+// void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
+void MC_ecal_pi0calib() {
     //Moved to global 
     // const Double_t z_calo = 6; // position of calorimeter from the target in m
     // const Double_t z_target = 0.09;    // position of target
@@ -387,19 +388,16 @@ void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
     // const double pi0_mass_pdg = 0.1349766;  // PDG pi0 mass in GeV
     TChain *ch = new TChain("T");
 
-    ifstream infile("runlist.txt");
-    string run_num;
     set<int> UncalibratedCh;
-    while (getline(infile, run_num)) {
-      if(stof(run_num)>=run_start && stof(run_num)<=run_end){
-	ch->Add(Form("/volatile/halla/sbs/jonesdc/output/reduced/rootfiles/gep5_fullreplay_nogems_%s_*.root", run_num.c_str()));
-      }
-    }
+	ch->Add("/volatile/halla/sbs/rfruiz/replayed_Digd_10K_pi0_Ecal_cal.root");
+
+    // /volatile/halla/sbs/rfruiz/replayed_Digd_10K_pi0_Ecal_cal.root
     // /volatile/halla/sbs/jonesdc/output/reduced/rootfiles/gep5_fullreplay_nogems_5056_.root
 
  
     // Initialize the pointers before setting the branch address
     // Define the  energy, x, y of each cluster
+    
     Double_t ecal_e[nbclusmax]; 
     Double_t ecal_x[nbclusmax];
     Double_t ecal_y[nbclusmax];
@@ -413,9 +411,9 @@ void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
     ch->AddBranchToCache("earm.ecal.clus.y", kTRUE);
 
     // Define the number of clusters
-    Double_t nclus = 0;
-    ch->SetBranchAddress("earm.ecal.nclus", &nclus);
-    ch->AddBranchToCache("earm.ecal.nclus", kTRUE);
+    Int_t nclus = 0;
+    ch->SetBranchAddress("Ndata.earm.ecal.clus.e", &nclus);
+    ch->AddBranchToCache("Ndata.earm.ecal.clus.e", kTRUE);
     // Define the time of each cluster
     Double_t clus_a_time[1000];
     ch->SetBranchAddress("earm.ecal.clus.atimeblk", &clus_a_time);
@@ -424,42 +422,49 @@ void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
     // Define the number of blocks in each cluster and the id of each block per cluster (max 100 blocks per cluster)
     Double_t clus_nblk[nbclusmax];       // number of blocks in the cluster
     Double_t clus_id[nbclusmax];         // block id
-    Double_t clus_row[nbclusmax];        // block row in the calorimeter
-    Double_t clus_col[nbclusmax];        // block column in the calorimeter
+
+    //already have good row cols
+    // Double_t clus_row[nbclusmax];        // block row in the calorimeter
+    // Double_t clus_col[nbclusmax];        // block column in the calorimeter
     //Double_t clus_eblk[nbclusmax];       // block energy with highest energy in the cluster
     //Double_t clus_idblk[nbclusmax];      // block id with highest energy in the cluster
-    Double_t goodblock_e[1000];
+
+    Int_t ngoodblk = 0;
+    Double_t goodblock_e[10000];
     Double_t goodblock_id[10000];
     Double_t goodblock_col[10000];
     Double_t goodblock_row[10000];
     Double_t goodblock_cid[10000];
-    //Double_t energy_blk[1000];
 
+    ch->SetBranchAddress("Ndata.earm.ecal.goodblock.e", &ngoodblk);
+    ch->AddBranchToCache("Ndata.earm.ecal.goodblock.e", kTRUE);
     ch->SetBranchAddress("earm.ecal.clus.nblk", &clus_nblk);
     ch->AddBranchToCache("earm.ecal.clus.nblk", kTRUE);
-    ch->SetBranchAddress("earm.ecal.clus.id", &clus_id);
-    ch->AddBranchToCache("earm.ecal.clus.id", kTRUE);
-    ch->SetBranchAddress("earm.ecal.clus.row", &clus_row);
-    ch->AddBranchToCache("earm.ecal.clus.row", kTRUE);
-    ch->SetBranchAddress("earm.ecal.clus.col", &clus_col);
-    ch->AddBranchToCache("earm.ecal.clus.col", kTRUE);
+    // ch->SetBranchAddress("earm.ecal.clus.id", &clus_id);
+    // ch->AddBranchToCache("earm.ecal.clus.id", kTRUE);
+    // ch->SetBranchAddress("earm.ecal.clus.row", &clus_row);
+    // ch->AddBranchToCache("earm.ecal.clus.row", kTRUE);
+    // ch->SetBranchAddress("earm.ecal.clus.col", &clus_col);
+    // ch->AddBranchToCache("earm.ecal.clus.col", kTRUE);
     //ch->SetBranchAddress("earm.ecal.clus.eblk", &clus_eblk);
     //ch->SetBranchAddress("earm.ecal.idblk", &clus_idblk);
-    ch->SetBranchAddress("earm.ecal.goodblock.e", &goodblock_e);
+    ch->SetBranchAddress("earm.ecal.goodblock.e", goodblock_e);
     ch->AddBranchToCache("earm.ecal.goodblock.e", kTRUE);
-    ch->SetBranchAddress("earm.ecal.goodblock.id", &goodblock_id);
+    ch->SetBranchAddress("earm.ecal.goodblock.id", goodblock_id);
     ch->AddBranchToCache("earm.ecal.goodblock.id", kTRUE);
-    ch->SetBranchAddress("earm.ecal.goodblock.col", &goodblock_col);
+    ch->SetBranchAddress("earm.ecal.goodblock.col", goodblock_col);
     ch->AddBranchToCache("earm.ecal.goodblock.col", kTRUE);
-    ch->SetBranchAddress("earm.ecal.goodblock.row", &goodblock_row);
+    ch->SetBranchAddress("earm.ecal.goodblock.row", goodblock_row);
     ch->AddBranchToCache("earm.ecal.goodblock.row", kTRUE);
-    ch->SetBranchAddress("earm.ecal.goodblock.cid", &goodblock_cid);
+    ch->SetBranchAddress("earm.ecal.goodblock.cid", goodblock_cid);
     ch->AddBranchToCache("earm.ecal.goodblock.cid", kTRUE);
 
 
     Double_t ngoodADChits = 0;
-    ch->SetBranchAddress("earm.ecal.ngoodADChits", &ngoodADChits);
-    ch->AddBranchToCache("earm.ecal.ngoodADChits",kTRUE);
+    // ch->SetBranchAddress("earm.ecal.ngoodADChits", ngoodADChits);
+    // ch->AddBranchToCache("earm.ecal.ngoodADChits",kTRUE);
+
+
     TH1F *h_pi0_mass = new TH1F("h_pi0_mass", "Pi0 Invariant Mass;M_{#pi^{0}} [GeV];Events", 80, 0, 0.6);
     TH1F *h_pi0_mass_corr = new TH1F("h_pi0_mass_reco", "Reconstructed #pi^{0} Invariant Mass;M_{#pi^{0}} [GeV];Events", 80, 0, 0.6);
 
@@ -492,6 +497,23 @@ void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
 
     Long64_t nEvents = ch->GetEntries();
     cout << "Number of events: " << nEvents << endl;
+    for (Long64_t i = 0; i < 20; i++) {
+        ch->GetEntry(i);
+        cout << "Event " << i 
+            << " clusters: " << nclus
+            << ", good blocks: " << ngoodblk 
+            // << ", good block ids: " << goodblock_id.size() << endl;
+            <<endl;
+
+        for (int b = 0; b < ngoodblk; b++) {
+            cout << "   block " << b
+                << " ID="   << goodblock_id[b]
+                << " E="    << goodblock_e[b]
+                << " Col="  << goodblock_col[b]
+                << " Row="  << goodblock_row[b]
+                << " CID="  << goodblock_cid[b] << endl;
+        }
+    }
 
 
     // --- Discover geometry from data: collect all unique block IDs ---
@@ -501,12 +523,28 @@ void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
     std::map<int, int> blockID_to_row, blockID_to_col;
 
     for (Long64_t i = 0; i < nEvents/100; ++i) {
+
+        cout << "Checking event : " << i << endl;
+
+
+        cout << "number of clusters : " << nclus << endl;
         ch->GetEntry(i);
+
         if (nclus < 1) continue;
-        for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
+
+        
+        // for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
+        for (int b = 0; b < ngoodblk; ++b) {
+            cout << "filling clus : " << b << endl;
+
+
             int bid = static_cast<int>(goodblock_id[b]);
             int row = static_cast<int>(goodblock_row[b]);
             int col = static_cast<int>(goodblock_col[b]);
+
+            cout << "current block id : " << bid << endl;
+            cout << "current row id : " << row << endl;
+            cout << "current col id : " << col << endl;
             if (bid >= 0) {
                 blockIDs.insert(bid);
                 blockID_to_row[bid] = row;
@@ -537,7 +575,7 @@ void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
     int idx = 0;
     for (int bid : blockIDs) {
         blockID_to_idx[bid] = idx++;
-        idx_to_blockID.push_back(bid);
+        idx_to_blockID.push_back(bid);        
     }
     int nblocks = idx_to_blockID.size();
 
@@ -822,7 +860,8 @@ void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
                 int cl = idx[ic];
 
                 // Assign energy to each good block
-                for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
+                // for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
+                for (int b = 0; b < ngoodblk; ++b) {
                     int rawID = (int)goodblock_id[b];
                     int cid = (int)goodblock_cid[b];
                     // Use blockID_to_idx to get the matrix index
@@ -922,7 +961,9 @@ void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
                 int cl = idx[ic];
 
                 // Assign energy to each good block
-                for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
+                // for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
+                for (int b = 0; b < ngoodblk; ++b) {
+
                     int rawID = (int)goodblock_id[b];
                     int cid = (int)goodblock_cid[b];
                     // Use blockID_to_idx to get the matrix index
@@ -967,695 +1008,10 @@ void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
     }
 
 //** -------------------- Plotting --------------------
-    // TCanvas *c = new TCanvas("c","Reconstructed #pi^{0} Invariant Mass Before and After Calibration", 800,600);
-    // h_pi0_mass->SetStats(0);
-    // h_pi0_mass_corr->SetStats(0);
-    // h_pi0_mass->GetXaxis()->SetTitle("G_{#pi^{0}} [GeV]");
-    // h_pi0_mass->GetYaxis ()->SetTitle("Events");
-    // h_pi0_mass->SetLineWidth(2);
-    // h_pi0_mass_corr->SetLineWidth(2);
-    // h_pi0_mass->SetLineColor(kBlue);
-    // h_pi0_mass_corr->SetLineColor(kRed);
-    // h_pi0_mass_corr->Draw();
-    // h_pi0_mass->Draw("SAME");
-    // auto leg = new TLegend(0.6,0.7,0.9,0.9);
-    // leg->AddEntry(h_pi0_mass,      "Before calib", "l");
-    // leg->AddEntry(h_pi0_mass_corr, "After calib",  "l");
-    // leg->Draw();
-    // c->SaveAs(Form("plots/top2E_ecal_pi0_mass_calib_noiter%i_%i.png",run_start,run_end));
-
-
-    // // Create a 2D histogram to visualize calibration coefficients in the detector geometry
-    // TH2F *h_coeff_map = new TH2F("h_coeff_map", "ECAL Block Calibration Coefficients;Column;Row",
-    //     ncol, minCol, maxCol + 1l,
-    //     nlin, minRow, maxRow + 1);
-    // TGraph *gr = new TGraph();
-    // TH1D *hCoeff = new TH1D("hCoeff","Calibration Coefficient Distribution",100,0,10);
-    // // Fill the 2D histogram using the coeff[] array 
-    // for (int i = 0; i < nblocks; ++i) {
-    //     int blockID = idx_to_blockID[i];
-    //     int row = blockID_to_row[blockID];
-    //     int col = blockID_to_col[blockID];
-    //     double val = coeff[i];
-    //     h_coeff_map->SetBinContent(col - minCol + 1, row - minRow + 1, val);  // ROOT bins start from 1
-	// gr->SetPoint(i,blockID,val);
-	// hCoeff->Fill(val);
-    // }
-    // cout << "\n -----  Summary of the cuts -----" << endl;
-    // cout<<"Events passing number of clusters cut after calib: "<<pass_clus_corr<<endl;
-    // //cout<<"Events passing deltaR cut after calib: "<<pass_deltar_corr<<endl;
-    // cout<<"Events passing time cut after calib: "<<pass_time_corr<<endl;
-    // cout<<"Events passing all cuts after calib: "<<pass_mass_corr<<endl;
-
-    // cout<<"-------------------- Difference between before and after calib -------------------"<<endl;
-    // cout << "Before calib: mean = " << h_pi0_mass->GetMean() 
-    //     << ", sigma = " << h_pi0_mass->GetRMS() << endl;
-    // cout << "After calib:  mean = " << h_pi0_mass_corr->GetMean() 
-    //     << ", sigma = " << h_pi0_mass_corr->GetRMS() << endl;
-
-    // // Draw the map
-    // TCanvas *c_map = new TCanvas("c_map", "ECAL Coefficients Heatmap", 1600, 900);
-    // c_map->Divide(2,2);
-    // c_map->cd(1);
-    // h_coeff_map->SetStats(0);
-    // h_coeff_map->Draw("COLZ");
-    // c_map->cd(2);
-    // gr->SetTitle("Calibration Coefficients vs. Block ID");
-    // gr->SetMarkerStyle(6);
-    // gr->Draw("ap");
-    // gr->GetXaxis()->SetTitle("Block ID");
-    // gr->GetYaxis()->SetTitle("Coefficient");
-    // gPad->Update();
-    // c_map->cd(3);
-    // hCoeff->Draw();
-    // c_map->cd(4);
-    // hEvsE->Draw("colz");
-    // c_map->SaveAs(Form("plots/top2E_ecal_coefficients_heatmap_noiter%i_%i.png",run_start,run_end));
-    // TCanvas *cDt = new TCanvas("cDt","Photon Differences",0,0,1600,900);
-    // cDt->Divide(2,2);
-    // cDt->cd(1);
-    // hBestDt->Draw();
-    // cDt->cd(2);
-    // hBestDx->Draw();
-    // cDt->cd(3);
-    // hAngle->Draw();
-    // hAngleCut->Draw("sames");
-    // cout<<UncalibratedCh.size()<<" uncalibrated channels:"<<endl;
-    // cDt->cd(4);
-    // hBestDE->Draw();
-    // cDt->SaveAs(Form("plots/top2E_randomPlots%i_%i.png",run_start,run_end));
-
-
-    // TCanvas *cE = new TCanvas("cE","Pi0 Energy Before/After Calibration",800,600);
-    // h_Epi0->SetStats(0);        h_Epi0_corr->SetStats(0);
-    // h_Epi0->SetLineWidth(2);    h_Epi0_corr->SetLineWidth(2);
-    // h_Epi0->SetLineColor(kBlue);
-    // h_Epi0_corr->SetLineColor(kRed);
-
-    // h_Epi0_corr->Draw();        // draw after-calib first
-    // h_Epi0->Draw("SAME");
-
-    // auto legE = new TLegend(0.6,0.7,0.9,0.9);
-    // legE->AddEntry(h_Epi0,      "Before calib", "l");
-    // legE->AddEntry(h_Epi0_corr, "After calib",  "l");
-    // legE->Draw();
-
-    // cE->SaveAs(Form("plots/top2E_ecal_pi0_energy_%i_%i.png",run_start,run_end));
-
-
-    TCanvas *cMassXY = new TCanvas("cMassXY","Invariant Mass vs Position",1200,600);
-    // cMassXY->Divide(2,1);
-    cMassXY->Divide(2,2);
-
-    cMassXY->cd(1);
-    hMassVsX->Draw("COLZ");
-
-    cMassXY->cd(2);
-    hMassVsY->Draw("COLZ");
-    
-    cMassXY->cd(3);
-    hMassVsX_corr->Draw("COLZ");
-
-    cMassXY->cd(4);
-    hMassVsY_corr->Draw("COLZ");
-
-    cMassXY->SaveAs(Form("plots/top2E_pi0_mass_vs_xy_%i_%i.png", run_start, run_end));
-
-
-    for(int val : UncalibratedCh)cout<<val<<", ";
-    cout<<endl;
-}
-
-
-
-
-void My_topNcluster_ecal_pi0calib(int run_start, int run_end) {
-
-    const int nbclusmax=100;    // maximum number of clusters
-    const int sizemax=1000;     // maximum size of the cluster (how many blocks in each cluster)
-
-    TChain *ch = new TChain("T");
-
-    ifstream infile("runlist.txt");
-    string run_num;
-    set<int> UncalibratedCh;
-    while (getline(infile, run_num)) {
-      if(stof(run_num)>=run_start && stof(run_num)<=run_end){
-	ch->Add(Form("/volatile/halla/sbs/jonesdc/output/reduced/rootfiles/gep5_fullreplay_nogems_%s_*.root", run_num.c_str()));
-      }
-    }
-
- 
-    // Initialize the pointers before setting the branch address
-    // Define the  energy, x, y of each cluster
-    Double_t ecal_e[nbclusmax]; 
-    Double_t ecal_x[nbclusmax];
-    Double_t ecal_y[nbclusmax];
-
-    ch->SetBranchStatus("*", 0); // disable all Branches
-    ch->SetBranchAddress("earm.ecal.clus.e", &ecal_e);
-    ch->AddBranchToCache("earm.ecal.clus.e", kTRUE);
-    ch->SetBranchAddress("earm.ecal.clus.x", &ecal_x);
-    ch->AddBranchToCache("earm.ecal.clus.x", kTRUE);
-    ch->SetBranchAddress("earm.ecal.clus.y", &ecal_y);
-    ch->AddBranchToCache("earm.ecal.clus.y", kTRUE);
-
-    // Define the number of clusters
-    Double_t nclus = 0;
-    ch->SetBranchAddress("earm.ecal.nclus", &nclus);
-    ch->AddBranchToCache("earm.ecal.nclus", kTRUE);
-    // Define the time of each cluster
-    Double_t clus_a_time[1000];
-    ch->SetBranchAddress("earm.ecal.clus.atimeblk", &clus_a_time);
-    ch->AddBranchToCache("earm.ecal.clus.atimeblk", kTRUE);
-
-    // Define the number of blocks in each cluster and the id of each block per cluster (max 100 blocks per cluster)
-    Double_t clus_nblk[nbclusmax];       // number of blocks in the cluster
-    Double_t clus_id[nbclusmax];         // block id
-    Double_t clus_row[nbclusmax];        // block row in the calorimeter
-    Double_t clus_col[nbclusmax];        // block column in the calorimeter
-    //Double_t clus_eblk[nbclusmax];       // block energy with highest energy in the cluster
-    //Double_t clus_idblk[nbclusmax];      // block id with highest energy in the cluster
-    Double_t goodblock_e[1000];
-    Double_t goodblock_id[10000];
-    Double_t goodblock_col[10000];
-    Double_t goodblock_row[10000];
-    Double_t goodblock_cid[10000];
-    //Double_t energy_blk[1000];
-
-    ch->SetBranchAddress("earm.ecal.clus.nblk", &clus_nblk);
-    ch->AddBranchToCache("earm.ecal.clus.nblk", kTRUE);
-    ch->SetBranchAddress("earm.ecal.clus.id", &clus_id);
-    ch->AddBranchToCache("earm.ecal.clus.id", kTRUE);
-    ch->SetBranchAddress("earm.ecal.clus.row", &clus_row);
-    ch->AddBranchToCache("earm.ecal.clus.row", kTRUE);
-    ch->SetBranchAddress("earm.ecal.clus.col", &clus_col);
-    ch->AddBranchToCache("earm.ecal.clus.col", kTRUE);
-    //ch->SetBranchAddress("earm.ecal.clus.eblk", &clus_eblk);
-    //ch->SetBranchAddress("earm.ecal.idblk", &clus_idblk);
-    ch->SetBranchAddress("earm.ecal.goodblock.e", &goodblock_e);
-    ch->AddBranchToCache("earm.ecal.goodblock.e", kTRUE);
-    ch->SetBranchAddress("earm.ecal.goodblock.id", &goodblock_id);
-    ch->AddBranchToCache("earm.ecal.goodblock.id", kTRUE);
-    ch->SetBranchAddress("earm.ecal.goodblock.col", &goodblock_col);
-    ch->AddBranchToCache("earm.ecal.goodblock.col", kTRUE);
-    ch->SetBranchAddress("earm.ecal.goodblock.row", &goodblock_row);
-    ch->AddBranchToCache("earm.ecal.goodblock.row", kTRUE);
-    ch->SetBranchAddress("earm.ecal.goodblock.cid", &goodblock_cid);
-    ch->AddBranchToCache("earm.ecal.goodblock.cid", kTRUE);
-
-
-    Double_t ngoodADChits = 0;
-    ch->SetBranchAddress("earm.ecal.ngoodADChits", &ngoodADChits);
-    ch->AddBranchToCache("earm.ecal.ngoodADChits",kTRUE);
-    TH1F *h_pi0_mass = new TH1F("h_pi0_mass", "Pi0 Invariant Mass;M_{#pi^{0}} [GeV];Events", 80, 0, 0.6);
-    TH1F *h_pi0_mass_corr = new TH1F("h_pi0_mass_reco", "Reconstructed #pi^{0} Invariant Mass;M_{#pi^{0}} [GeV];Events", 80, 0, 0.6);
-
-    
-    //Pi0 energy spectrum Histrograms
-    TH1F *h_Epi0      = new TH1F("h_Epi0",
-    "Pi^{0} Energy;E_{#pi^{0}} [GeV];Events", 140, 0, 14);
-    TH1F *h_Epi0_corr = new TH1F("h_Epi0_corr",
-    "Reconstructed Pi^{0} Energy;E_{#pi^{0}} [GeV];Events", 140, 0, 14);
-
-
-    Long64_t nEvents = ch->GetEntries();
-    cout << "Number of events: " << nEvents << endl;
-
-
-    // --- Discover geometry from data: collect all unique block IDs ---
-    int minRow = INT_MAX, maxRow = INT_MIN;
-    int minCol = INT_MAX, maxCol = INT_MIN;
-    std::set<int> blockIDs;
-    std::map<int, int> blockID_to_row, blockID_to_col;
-
-    for (Long64_t i = 0; i < nEvents/100; ++i) {
-        ch->GetEntry(i);
-        if (nclus < 1) continue;
-        for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
-            int bid = static_cast<int>(goodblock_id[b]);
-            int row = static_cast<int>(goodblock_row[b]);
-            int col = static_cast<int>(goodblock_col[b]);
-            if (bid >= 0) {
-                blockIDs.insert(bid);
-                blockID_to_row[bid] = row;
-                blockID_to_col[bid] = col;
-                if (row < minRow) minRow = row;
-                if (row > maxRow) maxRow = row;
-                if (col < minCol) minCol = col;
-                if (col > maxCol) maxCol = col;
-            }
-        }
-    }
-    int nlin = maxRow - minRow + 1;
-    int ncol = maxCol - minCol + 1;
-
-    /*for (Long64_t i = 0; i < nEvents/100; ++i) {
-        ch->GetEntry(i);
-        if (nclus < 1) continue;
-        // All good blocks (only active blocks)
-        for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
-            int bid = static_cast<int>(goodblock_id[b]);
-            if (bid >= 0) blockIDs.insert(bid);
-        }
-    }*/
-
-    // Build mapping: blockID <-> matrix index
-    std::map<int, int> blockID_to_idx;
-    std::vector<int> idx_to_blockID;
-    int idx = 0;
-    for (int bid : blockIDs) {
-        blockID_to_idx[bid] = idx++;
-        idx_to_blockID.push_back(bid);
-    }
-    int nblocks = idx_to_blockID.size();
-
-    cout << "Number of unique blocks: " << nblocks << endl;
-
-    // Matrix used for calibration
-    TMatrixD A(nblocks, nblocks);
-    TVectorD B(nblocks);
-    A.Zero();
-    B.Zero();
-
-    TH1D *hBestDt = new TH1D("hBestDt", "Time Difference between Photon Clusters",500,-50,50);
-    TH1D *hBestDE = new TH1D("hBestDE", "Energy Difference between Photon Clusters",200,-3,3);
-    TH2D *hEvsE = new TH2D("hEvsE", "Photon 2 Energy_{Cluster} vs Photon 1 E_{Cluster}",200,0,7,200,0,7);
-    TH1D *hBestDx = new TH1D("hBestDx", "Distance between Photon Clusters",50,0,5);
-    TH1D *hAngle = new TH1D("hAngle", "Angle between Photon Clusters",100,0,30);
-    TH1D *hAngleCut = new TH1D("hAngleCut", "Angle between Photon Clusters After Cut",200,-30,30);
-    hAngleCut->SetLineColor(kRed);
-  
-    // Block occupancy for later use
-    std::vector<int> occupancy(nblocks, 0);
-
-    // Define the counters for the cuts
-    Double_t pass_clus=0, pass_deltar=0, pass_time=0, pass_mass=0;
-    // initialize the random number generator
-    gRandom->SetSeed(0);
-    //Double_t pi0_mass_pdg_random = pi0_mass_pdg;    
-    std::vector<std::vector<std::vector<int>>> clusterBlocks(nEvents);
-
-//**Uncalibrated data(FIRST) event loop
-    for (Long64_t i = 0; i < nEvents; i++) {
-        ch->GetEntry(i);
-        if (i % 10000 == 0) {
-            cout << "Processing event (correction) " << i << " / " << nEvents << "\r";
-            cout.flush();
-        }
-        // Check that there are at least two clusters
-        if (nclus < 2) continue;
-        pass_clus++;
-
-
-    std::vector<int> iTop;//indices of N highest energy clusters
-    getTopNByEnergy(ecal_e, nclus, 4, iTop);
-
-    std::vector<PairCand> cands; //combinations of each top N energy clusters
-    
-    buildTopNPairs(iTop, ecal_e, clus_nblk, ecal_x, ecal_y, clus_a_time, cands); //Adds pairs that pass preliminary restrictions
-
-    if (cands.empty()) continue;
-    pass_time++;
-
-    // Takes the best two clusters (closest to expected mass ie most Pi0 like)
-    auto best = cands.front();
-    int best_icl = best.i;
-    int best_jcl = best.j;
-    double best_dt = best.dt;
-    double best_mass = best.M;
-
-    hBestDt->Fill(best_dt);
-    hBestDE->Fill(ecal_e[best_icl] - ecal_e[best_jcl]);
-    hBestDx->Fill(
-        std::sqrt(std::pow(ecal_x[best_icl] - ecal_x[best_jcl], 2) +
-        std::pow(ecal_y[best_icl] - ecal_y[best_jcl], 2))
-    );
-
-
-
-        if (best_icl >= 0 && best_jcl >= 0) {
-
-            TVector3 pos1(ecal_x[best_icl], ecal_y[best_icl], z_calo);  // in m
-            TVector3 pos2(ecal_x[best_jcl], ecal_y[best_jcl], z_calo);  // in m
-
-            TVector3 vertex(0, 0, z_target);
-            TVector3 dir1 = (pos1 - vertex).Unit();
-            TVector3 dir2 = (pos2 - vertex).Unit();
-
-            TLorentzVector ph1(dir1.X() * ecal_e[best_icl], dir1.Y() * ecal_e[best_icl], dir1.Z() * ecal_e[best_icl], ecal_e[best_icl]);
-            TLorentzVector ph2(dir2.X() * ecal_e[best_jcl], dir2.Y() * ecal_e[best_jcl], dir2.Z() * ecal_e[best_jcl], ecal_e[best_jcl]);
-
-
-            Double_t pi0_mass = (ph1 + ph2).M();
-
-            Double_t opening_angle = dir1.Angle(dir2) * (180.0 / TMath::Pi());
-	    
-            hAngle->Fill(opening_angle);
-            // if (opening_angle < 3.5 || opening_angle > 15) continue;  // The lower cut (e.g., < 6°) removes nearly collinear photon pairs → likely merged.
-                                                                // The upper cut (e.g., > 80°) removes highly unphysical, possibly misreconstructed pairs.
-	    hAngleCut->Fill(opening_angle);
-	    
-            if (pi0_mass < 0.02 || pi0_mass > 0.6) continue;
-            pass_mass++;
-            h_pi0_mass->Fill(pi0_mass);
-
-            double Epi0 = (ph1 + ph2).E(); // == ecal_e[best_icl] + ecal_e[best_jcl]
-            h_Epi0->Fill(Epi0);
-
-
-            // compute expected total π0 energy as using the scale factor
-            //double pi0_mass_smeared = gRandom->Gaus(pi0_mass_pdg, 0.005); // 5 MeV width max
-            double expected_E = (ecal_e[best_icl] + ecal_e[best_jcl]) * (pi0_mass_pdg / pi0_mass);
-            //double expected_E = pi0_mass_pdg / pi0_mass;
-            hEvsE->Fill(ecal_e[best_icl],ecal_e[best_jcl]);
-            // **Loop over all blocks in cluster **:
-            // zero the per-block energy accumulator
-            static std::vector<double> energy(nblocks, 0.0);
-            energy.assign(nblocks, 0.0);
-    
-            // Loop over all clusters and blocks per event
-            for (int cl = 0; cl < nclus; ++cl) {
-	      if(!(cl == best_icl || cl == best_jcl))continue;
-                // Assign energy to each good block
-                for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
-                    int rawID = (int)goodblock_id[b];
-                    int cid = (int)goodblock_cid[b];
-                    //int iblock = num_btom[rawID];
-                    int iblock = blockID_to_idx.count(rawID) ? blockID_to_idx[rawID] : -1;
-                    if (iblock < 0 || iblock >= nblocks) continue;
-                    if (cid != cl) continue; // Only assign energy to blocks in this cluster
-                    energy[iblock] += goodblock_e[b];
-                    if (energy[iblock] > 0.0) occupancy[iblock]++;
-                }
-            }
-            // Now fill A and B:
-            for (int j = 0; j < nblocks; ++j) {
-                for (int k = 0; k < nblocks; ++k) {
-                    A(j,k) += energy[j] * energy[k]/(expected_E*expected_E);
-                    // A(j,k) += energy[j] * energy[k]/expected_E;
-                }
-                B(j) += energy[j]/expected_E;
-                // B(j) += energy[j];
-            } 
-        }
-    }
-    cout<<"Events passing number of clusters cut: "<<pass_clus<<endl;
-    //cout<<"Events passing deltaR cut: "<<pass_deltar<<endl;
-    cout<<"Events passing time cut: "<<pass_time<<endl;
-    cout<<"Events passing all cuts: "<<pass_mass<<endl;
-  
-    // ===================== OCCUPANCY PRUNING & REGULARIZATION =====================
-    const int N_min = 30;
-    for (int i = 0; i < nblocks; ++i) {
-        if (occupancy[i] < N_min) {
-            // zero out row and column i
-            for (int j = 0; j < nblocks; ++j) {
-                A(i,j) = A(j,i) = 0.0;
-            }
-            A(i,i) = 1.0;
-            B(i) = 1.0;
-	    UncalibratedCh.insert(i);
-        }
-    }
-    
-    // add small diagonal term λ·A_ii for singularity
-    const double lambda = 0;//1e-4;
-    // const double lambda = 1e-4;
-    for (int i = 0; i < nblocks; ++i) {
-        A(i,i) += lambda * A(i,i);
-    }
-        
-    // -------------------- Invert the Matrix --------------------
-    //A.Print();
-    std::cout
-        <<"[DEBUG] A(0,0)="<<A(0,0)
-        <<", B(0,0)="<<B(0)
-        <<"\n";
-        for (int i = 0; i < std::min(5,nblocks); ++i) {
-        std::cout<<"  B(0,"<<i<<")="<<B(i)<<"\n";
-        }
-
-    //Double_t coeff[nblocks];
-    std::vector<double> coeff(nblocks, 1.0);
-
-    // SVD decomposition of A and solve C = A⁺·B (see https://root.cern.ch/doc/master/classTDecompSVD.html)
-    TDecompSVD svd(A);
-    if (!svd.Decompose()) {
-      cerr<<"ERROR: SVD decomposition failed\n";
-      return;
-    }
-    // Prepare solution vector
-    // Copy B into C, then solve C = A⁺·B
-    cout << "\n--- Solving the matrix system ---" << endl;
-    TVectorD C = B;           // initialize C with RHS
-    Bool_t ok = svd.Solve(C); // Solve in place: C ← pseudo-inverse(A)·C
-    if (!ok) {
-      cerr<<"ERROR: SVD Solve failed\n";
-      return;
-    }
-
-    for (int i = 0; i < min(nblocks,5); ++i) {
-      cout << "C["<<i<<"] = " << C(i) << "\n";
-    }
-        // the coefficients of the linear system 
-        // C = A^-1 * B where A^-1 is the inverse of A, B is the vector of unknowns, and C is the vector of calibration coefficients. originally A * C = B
-        //TMatrixD C = B * A;  // 1×nblocksm * nblocksm×nblocksm
-
-    // now overwrite just the “good” ones using occupancy
-    for (int compID = 0; compID < nblocks; ++compID) {
-        //int rawID = num_mtob[compID];     // reverse map
-        //int blockID = idx_to_blockID[compID];
-        //double c = C(0,compID);
-        double c = C(compID);
-
-        if (occupancy[compID] < N_min || c < 1e-2 || c > 10) {
-            coeff[compID] = 1.0;
-        } else {
-            coeff[compID] = c;
-        //coeff[rawID] = C(0, compID);      // use same compID as above
-        }
-    }
-    
-   
-    // Now, with the coefficients in hand, I can use them to calibrate the Ecal energy in the code.
-    // Use the coefficients to calibrate the Ecal energy and plot the pi0 invariant mass
-    // with and without the correction
-
-    // counters for passing events
-    Double_t pass_clus_corr=0, pass_deltar_corr=0, pass_time_corr=0, pass_mass_corr=0;
-    double test_mass_sum = 0;
-    int test_mass_count = 0;
- 
-//**Calibrated unscaled data(SECOND) event loop
-    for (Long64_t i = 0; i < nEvents; i++) {
-        ch->GetEntry(i);
-        if (i % 10000 == 0) {
-            cout << "Processing event (correction) " << i << " / " << nEvents << "\r";
-            cout.flush();
-        }
-        // Check that there are at least two clusters
-        if (nclus < 2) continue;
-        pass_clus_corr++;
-
-
-    std::vector<int> iTop;//indices of N highest energy clusters
-    getTopNByEnergy(ecal_e, nclus, 4, iTop);
-
-    std::vector<PairCand> cands; //combinations of each top N energy clusters
-    buildTopNPairs(iTop, ecal_e, clus_nblk, ecal_x, ecal_y, clus_a_time, cands);
-
-    if (cands.empty()) continue;
-        pass_time_corr++;
-
-    // Takes the best two clusters (closest to expected mass ie most Pi0 like)
-    auto best = cands.front();
-    int best_icl = best.i;
-    int best_jcl = best.j;
-    double best_dt = best.dt;
-    double best_mass = best.M;
-
-    hBestDt->Fill(best_dt);
-    hBestDE->Fill(ecal_e[best_icl] - ecal_e[best_jcl]);
-    hBestDx->Fill(
-        std::sqrt(std::pow(ecal_x[best_icl] - ecal_x[best_jcl], 2) +
-        std::pow(ecal_y[best_icl] - ecal_y[best_jcl], 2))
-    );
- 
-        // **After** correction: rebuild each photon’s energy by summing
-        //     per‑block energies * coefficients
-        if (best_icl >= 0 && best_jcl >= 0) {
-        //     if (!((best_icl == imax1 && best_jcl == imax2) || (best_icl == imax2 && best_jcl == imax1))) {
-        //         continue; // skip if not the two highest-energy clusters
-        //     }
-            double e_corr[2] = {0., 0.};
-
-            int idx[2] = {best_icl, best_jcl};
-            for (int ic = 0; ic < 2; ++ic) {
-                int cl = idx[ic];
-
-                // Assign energy to each good block
-                for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
-                    int rawID = (int)goodblock_id[b];
-                    int cid = (int)goodblock_cid[b];
-                    // Use blockID_to_idx to get the matrix index
-                    auto it = blockID_to_idx.find(rawID);
-                    if (it == blockID_to_idx.end()) continue; // skip if not a known block
-                    if (cid != cl) continue; // Only assign energy to blocks in this cluster
-                    e_corr[ic] += coeff[it->second] * goodblock_e[b];
-                }
-            }
-            TVector3 pos1(ecal_x[best_icl], ecal_y[best_icl], z_calo);  // in m
-            TVector3 pos2(ecal_x[best_jcl], ecal_y[best_jcl], z_calo);  // in m
-
-            TVector3 vertex(0, 0, z_target);
-            TVector3 dir1 = (pos1 - vertex).Unit();
-            TVector3 dir2 = (pos2 - vertex).Unit();
-
-            // rebuild corrected TLorentzVectors
-            TLorentzVector ph1_corr(dir1.X() * e_corr[0], dir1.Y() * e_corr[0], dir1.Z() * e_corr[0], e_corr[0]);
-            TLorentzVector ph2_corr(dir2.X() * e_corr[1], dir2.Y() * e_corr[1], dir2.Z() * e_corr[1], e_corr[1]);
-            
-            double pi0_mass_corr = (ph1_corr + ph2_corr).M();
-
-            Double_t opening_angle = dir1.Angle(dir2) * (180.0 / TMath::Pi());
-            // if (opening_angle < 3.5 || opening_angle > 8) continue;  // The lower cut (e.g., < 6°) removes nearly collinear photon pairs → likely merged.
-            // if (opening_angle < 3.5 || opening_angle > 15) continue;  // The lower cut (e.g., < 6°) removes nearly collinear photon pairs → likely merged.
-            // The upper cut (e.g., > 80°) removes highly unphysical, possibly misreconstructed pairs.
-
-            if (pi0_mass_corr <= 0.02 || pi0_mass_corr >= 0.4) continue;    // Making a cut on the pi0 mass, e.g., between 0.06 and 0.6 GeV
-
-            // fill histograms
-            test_mass_sum += pi0_mass_corr;
-            test_mass_count++;
-            //pass_mass_corr++;
-            //h_pi0_mass_corr->Fill(pi0_mass_corr);
-        }
-    }
-    
-    cout << "\n -----  Scaling coefficients to match PDG π⁰ mass.. -----" << endl;
-    if (test_mass_sum > 0) {
-        double mean_mass = test_mass_sum / test_mass_count;
-        double scale_factor = pi0_mass_pdg / mean_mass;
-
-        // Apply the scaling factor to the coefficients
-        for (int i = 0; i < nblocks; ++i) {
-            coeff[i] *= scale_factor;
-        }
-    }
-    //h_pi0_mass_corr->Reset();
-
-     // -------------------- Saving the coefficients in a text file --------------------
-    cout << "\n--- Creating the coefficient file ---" << endl;
-    cout<<"Writing coefficients to file..."<<endl;
-
-    ofstream coeff_file("calib_coeff/ecal_block_calibration_factors_noiter.txt");
-    coeff_file << "# BlockID\tCalibrationCoeff\n";
-
-    for (int i = 0; i < nblocks; i++) {
-        int blockID = idx_to_blockID[i];
-        coeff_file << blockID << "\t" << coeff[i] << endl;
-        cout << "BlockID: " << i << "\tCalibrationCoeff: " << coeff[i] << endl;
-    }
-
-    coeff_file.close();
-
-//**(THIRD loop) Filling histos with Calibrated data
-    for (Long64_t i = 0; i < nEvents; i++) {
-        ch->GetEntry(i);
-        if (i % 10000 == 0) {
-            cout << "Processing event (correction) " << i << " / " << nEvents << "\r";
-            cout.flush();
-        }
-        // Check that there are at least two clusters
-        if (nclus < 2) continue;
-        pass_clus++;
-
-
-    // Find the two clusters with the best time difference and apply cuts
-    
-
-    //     pass_time++;
-
-
-    std::vector<int> iTop;//indices of N highest energy clusters
-    getTopNByEnergy(ecal_e, nclus, 4, iTop);
-
-    std::vector<PairCand> cands; //combinations of each top N energy clusters
-    buildTopNPairs(iTop, ecal_e, clus_nblk, ecal_x, ecal_y, clus_a_time, cands);
-
-    if (cands.empty()) continue;
-
-    // Takes the best two clusters (closest to expected mass ie most Pi0 like)
-    auto best = cands.front();
-    int best_icl = best.i;
-    int best_jcl = best.j;
-    double best_dt = best.dt;
-    double best_mass = best.M;
-    
-    pass_clus_corr++;
-
-    hBestDt->Fill(best_dt);
-    hBestDE->Fill(ecal_e[best_icl] - ecal_e[best_jcl]);
-    hBestDx->Fill(
-        std::sqrt(std::pow(ecal_x[best_icl] - ecal_x[best_jcl], 2) +
-        std::pow(ecal_y[best_icl] - ecal_y[best_jcl], 2))
-    );
- 
-        // **After** correction: rebuild each photon’s energy by summing
-        //     per‑block energies * coefficients
-        if (best_icl >= 0 && best_jcl >= 0) {
-            // if (!((best_icl == imax1 && best_jcl == imax2) || (best_icl == imax2 && best_jcl == imax1))) {
-            //     continue; // skip if not the two highest-energy clusters
-            // }
-            double e_corr[2] = {0., 0.};
-
-            int idx[2] = {best_icl, best_jcl};
-            for (int ic = 0; ic < 2; ++ic) {
-                int cl = idx[ic];
-
-                // Assign energy to each good block
-                for (unsigned int b = 0; b < (unsigned int)ngoodADChits; ++b) {
-                    int rawID = (int)goodblock_id[b];
-                    int cid = (int)goodblock_cid[b];
-                    // Use blockID_to_idx to get the matrix index
-                    auto it = blockID_to_idx.find(rawID);
-                    if (it == blockID_to_idx.end()) continue; // skip if not a known block
-                    if (cid != cl) continue; // Only assign energy to blocks in this cluster
-                    e_corr[ic] += coeff[it->second] * goodblock_e[b];
-                }
-            }
-            TVector3 pos1(ecal_x[best_icl], ecal_y[best_icl], z_calo);  // in m
-            TVector3 pos2(ecal_x[best_jcl], ecal_y[best_jcl], z_calo);  // in m
-
-            TVector3 vertex(0, 0, z_target);
-            TVector3 dir1 = (pos1 - vertex).Unit();
-            TVector3 dir2 = (pos2 - vertex).Unit();
-
-            // rebuild corrected TLorentzVectors
-            TLorentzVector ph1_corr(dir1.X() * e_corr[0], dir1.Y() * e_corr[0], dir1.Z() * e_corr[0], e_corr[0]);
-            TLorentzVector ph2_corr(dir2.X() * e_corr[1], dir2.Y() * e_corr[1], dir2.Z() * e_corr[1], e_corr[1]);
-            
-            double pi0_mass_corr = (ph1_corr + ph2_corr).M();
-
-            Double_t opening_angle = dir1.Angle(dir2) * (180.0 / TMath::Pi());
-            if (opening_angle < 3.5 || opening_angle > 8) continue;  // The lower cut (e.g., < 6°) removes nearly collinear photon pairs → likely merged.
-                                                                    // The upper cut (e.g., > 80°) removes highly unphysical, possibly misreconstructed pairs.
-
-            if (pi0_mass_corr <= 0.02 || pi0_mass_corr >= 0.4) continue;    // Making a cut on the pi0 mass, e.g., between 0.06 and 0.6 GeV
-            h_pi0_mass_corr->Fill(pi0_mass_corr);
-            
-            //fill pi0 E after
-            double Epi0_corr = (ph1_corr + ph2_corr).E(); // == e_corr[0] + e_corr[1]
-            h_Epi0_corr->Fill(Epi0_corr);
-        }
-    }
-
-    // -------------------- Plotting --------------------
-    TCanvas *c = new TCanvas("c","Reconstructed #pi^{0} Invariant Mass Before and After Calibration", 800,600);
+    TCanvas *c = new TCanvas("c","Reconstructed MC #pi^{0} Invariant Mass Before and After Calibration", 800,600);
     h_pi0_mass->SetStats(0);
     h_pi0_mass_corr->SetStats(0);
-    h_pi0_mass->GetXaxis()->SetTitle("G_{#pi^{0}} [GeV]");
+    h_pi0_mass->GetXaxis()->SetTitle("MC_G_{#pi^{0}} [GeV]");
     h_pi0_mass->GetYaxis ()->SetTitle("Events");
     h_pi0_mass->SetLineWidth(2);
     h_pi0_mass_corr->SetLineWidth(2);
@@ -1667,15 +1023,15 @@ void My_topNcluster_ecal_pi0calib(int run_start, int run_end) {
     leg->AddEntry(h_pi0_mass,      "Before calib", "l");
     leg->AddEntry(h_pi0_mass_corr, "After calib",  "l");
     leg->Draw();
-    c->SaveAs(Form("plots/ecal_pi0_mass_calib_noiter%i_%i.png",run_start,run_end));
+    c->SaveAs("/work/halla/sbs/rfruiz/ecal_pi0Calib/plots/MC/top2E_MC_ecal_pi0_mass_calib_noiter.png");
 
 
     // Create a 2D histogram to visualize calibration coefficients in the detector geometry
-    TH2F *h_coeff_map = new TH2F("h_coeff_map", "ECAL Block Calibration Coefficients;Column;Row",
+    TH2F *h_coeff_map = new TH2F("h_coeff_map", "MC ECAL Block Calibration Coefficients;Column;Row",
         ncol, minCol, maxCol + 1l,
         nlin, minRow, maxRow + 1);
     TGraph *gr = new TGraph();
-    TH1D *hCoeff = new TH1D("hCoeff","Calibration Coefficient Distribution",100,0,10);
+    TH1D *hCoeff = new TH1D("hCoeff","MC Calibration Coefficient Distribution",100,0,10);
     // Fill the 2D histogram using the coeff[] array 
     for (int i = 0; i < nblocks; ++i) {
         int blockID = idx_to_blockID[i];
@@ -1699,13 +1055,13 @@ void My_topNcluster_ecal_pi0calib(int run_start, int run_end) {
         << ", sigma = " << h_pi0_mass_corr->GetRMS() << endl;
 
     // Draw the map
-    TCanvas *c_map = new TCanvas("c_map", "ECAL Coefficients Heatmap", 1600, 900);
+    TCanvas *c_map = new TCanvas("c_map", "MC ECAL Coefficients Heatmap", 1600, 900);
     c_map->Divide(2,2);
     c_map->cd(1);
     h_coeff_map->SetStats(0);
     h_coeff_map->Draw("COLZ");
     c_map->cd(2);
-    gr->SetTitle("Calibration Coefficients vs. Block ID");
+    gr->SetTitle("MC Calibration Coefficients vs. Block ID");
     gr->SetMarkerStyle(6);
     gr->Draw("ap");
     gr->GetXaxis()->SetTitle("Block ID");
@@ -1715,7 +1071,7 @@ void My_topNcluster_ecal_pi0calib(int run_start, int run_end) {
     hCoeff->Draw();
     c_map->cd(4);
     hEvsE->Draw("colz");
-    c_map->SaveAs(Form("plots/ecal_coefficients_heatmap_noiter%i_%i.png",run_start,run_end));
+    c_map->SaveAs("/work/halla/sbs/rfruiz/ecal_pi0Calib/plots/MC/top2E_MC_ecal_coefficients_heatmap_noiter.png");
     TCanvas *cDt = new TCanvas("cDt","Photon Differences",0,0,1600,900);
     cDt->Divide(2,2);
     cDt->cd(1);
@@ -1728,7 +1084,7 @@ void My_topNcluster_ecal_pi0calib(int run_start, int run_end) {
     cout<<UncalibratedCh.size()<<" uncalibrated channels:"<<endl;
     cDt->cd(4);
     hBestDE->Draw();
-    cDt->SaveAs(Form("plots/randomPlots%i_%i.png",run_start,run_end));
+    cDt->SaveAs("/work/halla/sbs/rfruiz/ecal_pi0Calib/plots/MC/top2E_MC_randomPlots.png");
 
 
     TCanvas *cE = new TCanvas("cE","Pi0 Energy Before/After Calibration",800,600);
@@ -1745,8 +1101,128 @@ void My_topNcluster_ecal_pi0calib(int run_start, int run_end) {
     legE->AddEntry(h_Epi0_corr, "After calib",  "l");
     legE->Draw();
 
-    cE->SaveAs(Form("plots/ecal_pi0_energy_%i_%i.png",run_start,run_end));
+    cE->SaveAs("/work/halla/sbs/rfruiz/ecal_pi0Calib/plots/MC/top2E_MC_ecal_pi0_energy.png");
+
+
+    TCanvas *cMassXY = new TCanvas("cMassXY","MC Invariant Mass vs Position",1200,600);
+    // cMassXY->Divide(2,1);
+    cMassXY->Divide(2,2);
+
+    cMassXY->cd(1);
+    hMassVsX->Draw("COLZ");
+
+    cMassXY->cd(2);
+    hMassVsY->Draw("COLZ");
+    
+    cMassXY->cd(3);
+    hMassVsX_corr->Draw("COLZ");
+
+    cMassXY->cd(4);
+    hMassVsY_corr->Draw("COLZ");
+
+    cMassXY->SaveAs("/work/halla/sbs/rfruiz/ecal_pi0Calib/plots/MC/top2E_MC_pi0_mass_vs_xy.png");
 
     for(int val : UncalibratedCh)cout<<val<<", ";
     cout<<endl;
 }
+
+
+    // -------------------- Plotting --------------------
+//     TCanvas *c = new TCanvas("c","Reconstructed #pi^{0} Invariant Mass Before and After Calibration", 800,600);
+//     h_pi0_mass->SetStats(0);
+//     h_pi0_mass_corr->SetStats(0);
+//     h_pi0_mass->GetXaxis()->SetTitle("G_{#pi^{0}} [GeV]");
+//     h_pi0_mass->GetYaxis ()->SetTitle("Events");
+//     h_pi0_mass->SetLineWidth(2);
+//     h_pi0_mass_corr->SetLineWidth(2);
+//     h_pi0_mass->SetLineColor(kBlue);
+//     h_pi0_mass_corr->SetLineColor(kRed);
+//     h_pi0_mass_corr->Draw();
+//     h_pi0_mass->Draw("SAME");
+//     auto leg = new TLegend(0.6,0.7,0.9,0.9);
+//     leg->AddEntry(h_pi0_mass,      "Before calib", "l");
+//     leg->AddEntry(h_pi0_mass_corr, "After calib",  "l");
+//     leg->Draw();
+//     c->SaveAs(Form("/work/halla/sbs/rfruiz/ecal_pi0Calib/plots/ecal_pi0_mass_calib_noiter%i_%i.png",run_start,run_end));
+
+
+//     // Create a 2D histogram to visualize calibration coefficients in the detector geometry
+//     TH2F *h_coeff_map = new TH2F("h_coeff_map", "ECAL Block Calibration Coefficients;Column;Row",
+//         ncol, minCol, maxCol + 1l,
+//         nlin, minRow, maxRow + 1);
+//     TGraph *gr = new TGraph();
+//     TH1D *hCoeff = new TH1D("hCoeff","Calibration Coefficient Distribution",100,0,10);
+//     // Fill the 2D histogram using the coeff[] array 
+//     for (int i = 0; i < nblocks; ++i) {
+//         int blockID = idx_to_blockID[i];
+//         int row = blockID_to_row[blockID];
+//         int col = blockID_to_col[blockID];
+//         double val = coeff[i];
+//         h_coeff_map->SetBinContent(col - minCol + 1, row - minRow + 1, val);  // ROOT bins start from 1
+// 	gr->SetPoint(i,blockID,val);
+// 	hCoeff->Fill(val);
+//     }
+//     cout << "\n -----  Summary of the cuts -----" << endl;
+//     cout<<"Events passing number of clusters cut after calib: "<<pass_clus_corr<<endl;
+//     //cout<<"Events passing deltaR cut after calib: "<<pass_deltar_corr<<endl;
+//     cout<<"Events passing time cut after calib: "<<pass_time_corr<<endl;
+//     cout<<"Events passing all cuts after calib: "<<pass_mass_corr<<endl;
+
+//     cout<<"-------------------- Difference between before and after calib -------------------"<<endl;
+//     cout << "Before calib: mean = " << h_pi0_mass->GetMean() 
+//         << ", sigma = " << h_pi0_mass->GetRMS() << endl;
+//     cout << "After calib:  mean = " << h_pi0_mass_corr->GetMean() 
+//         << ", sigma = " << h_pi0_mass_corr->GetRMS() << endl;
+
+//     // Draw the map
+//     TCanvas *c_map = new TCanvas("c_map", "MC_ECAL Coefficients Heatmap", 1600, 900);
+//     c_map->Divide(2,2);
+//     c_map->cd(1);
+//     h_coeff_map->SetStats(0);
+//     h_coeff_map->Draw("COLZ");
+//     c_map->cd(2);
+//     gr->SetTitle("MC_Calibration Coefficients vs. Block ID");
+//     gr->SetMarkerStyle(6);
+//     gr->Draw("ap");
+//     gr->GetXaxis()->SetTitle("Block ID");
+//     gr->GetYaxis()->SetTitle("Coefficient");
+//     gPad->Update();
+//     c_map->cd(3);
+//     hCoeff->Draw();
+//     c_map->cd(4);
+//     hEvsE->Draw("colz");
+//     c_map->SaveAs(Form("/work/halla/sbs/rfruiz/ecal_pi0Calib/plots/MC_ecal_coefficients_heatmap_noiter%i_%i.png",run_start,run_end));
+//     TCanvas *cDt = new TCanvas("cDt","Photon Differences",0,0,1600,900);
+//     cDt->Divide(2,2);
+//     cDt->cd(1);
+//     hBestDt->Draw();
+//     cDt->cd(2);
+//     hBestDx->Draw();
+//     cDt->cd(3);
+//     hAngle->Draw();
+//     hAngleCut->Draw("sames");
+//     cout<<UncalibratedCh.size()<<" uncalibrated channels:"<<endl;
+//     cDt->cd(4);
+//     hBestDE->Draw();
+//     cDt->SaveAs(Form("/work/halla/sbs/rfruiz/ecal_pi0Calib/plots/MC_ecal_random/work/halla/sbs/rfruiz/ecal_pi0Calib/plots.png"));
+
+
+//     TCanvas *cE = new TCanvas("cE","MC_Pi0 Energy Before/After Calibration",800,600);
+//     h_Epi0->SetStats(0);        h_Epi0_corr->SetStats(0);
+//     h_Epi0->SetLineWidth(2);    h_Epi0_corr->SetLineWidth(2);
+//     h_Epi0->SetLineColor(kBlue);
+//     h_Epi0_corr->SetLineColor(kRed);
+
+//     h_Epi0_corr->Draw();        // draw after-calib first
+//     h_Epi0->Draw("SAME");
+
+//     auto legE = new TLegend(0.6,0.7,0.9,0.9);
+//     legE->AddEntry(h_Epi0,      "Before calib", "l");
+//     legE->AddEntry(h_Epi0_corr, "After calib",  "l");
+//     legE->Draw();
+
+//     cE->SaveAs(Form("/work/halla/sbs/rfruiz/ecal_pi0Calib/plots/MC_ecal_pi0_energy_%i_%i.png",run_start,run_end));
+
+//     for(int val : UncalibratedCh)cout<<val<<", ";
+//     cout<<endl;
+// }
