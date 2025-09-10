@@ -402,7 +402,12 @@ void MC_ecal_pi0calib() {
     Double_t ecal_x[nbclusmax];
     Double_t ecal_y[nbclusmax];
 
-    ch->SetBranchStatus("*", 0); // disable all Branches
+    ch->SetBranchStatus("*", 0);  // disable all
+    ch->SetBranchStatus("earm.ecal.*", 1);
+    ch->SetBranchStatus("Ndata.earm.ecal.*", 1);
+
+
+
     ch->SetBranchAddress("earm.ecal.clus.e", &ecal_e);
     ch->AddBranchToCache("earm.ecal.clus.e", kTRUE);
     ch->SetBranchAddress("earm.ecal.clus.x", &ecal_x);
@@ -440,14 +445,6 @@ void MC_ecal_pi0calib() {
     ch->AddBranchToCache("Ndata.earm.ecal.goodblock.e", kTRUE);
     ch->SetBranchAddress("earm.ecal.clus.nblk", &clus_nblk);
     ch->AddBranchToCache("earm.ecal.clus.nblk", kTRUE);
-    // ch->SetBranchAddress("earm.ecal.clus.id", &clus_id);
-    // ch->AddBranchToCache("earm.ecal.clus.id", kTRUE);
-    // ch->SetBranchAddress("earm.ecal.clus.row", &clus_row);
-    // ch->AddBranchToCache("earm.ecal.clus.row", kTRUE);
-    // ch->SetBranchAddress("earm.ecal.clus.col", &clus_col);
-    // ch->AddBranchToCache("earm.ecal.clus.col", kTRUE);
-    //ch->SetBranchAddress("earm.ecal.clus.eblk", &clus_eblk);
-    //ch->SetBranchAddress("earm.ecal.idblk", &clus_idblk);
     ch->SetBranchAddress("earm.ecal.goodblock.e", goodblock_e);
     ch->AddBranchToCache("earm.ecal.goodblock.e", kTRUE);
     ch->SetBranchAddress("earm.ecal.goodblock.id", goodblock_id);
@@ -458,8 +455,16 @@ void MC_ecal_pi0calib() {
     ch->AddBranchToCache("earm.ecal.goodblock.row", kTRUE);
     ch->SetBranchAddress("earm.ecal.goodblock.cid", goodblock_cid);
     ch->AddBranchToCache("earm.ecal.goodblock.cid", kTRUE);
-
-
+    // ch->SetBranchAddress("earm.ecal.clus.id", &clus_id);
+    // ch->AddBranchToCache("earm.ecal.clus.id", kTRUE);
+    // ch->SetBranchAddress("earm.ecal.clus.row", &clus_row);
+    // ch->AddBranchToCache("earm.ecal.clus.row", kTRUE);
+    // ch->SetBranchAddress("earm.ecal.clus.col", &clus_col);
+    // ch->AddBranchToCache("earm.ecal.clus.col", kTRUE);
+    //ch->SetBranchAddress("earm.ecal.clus.eblk", &clus_eblk);
+    //ch->SetBranchAddress("earm.ecal.idblk", &clus_idblk);
+    
+    
     Double_t ngoodADChits = 0;
     // ch->SetBranchAddress("earm.ecal.ngoodADChits", ngoodADChits);
     // ch->AddBranchToCache("earm.ecal.ngoodADChits",kTRUE);
