@@ -165,6 +165,10 @@ void ecal_pi0calib(int run_start, int run_end) {
     TH1F *h_Epi0_corr = new TH1F("h_Epi0_corr",
     "Reconstructed Pi^{0} Energy;E_{#pi^{0}} [GeV];Events", 140, 0, 14);
 
+    TH1F *hClusTime = new TH1F("hClusTime",
+    "Photon Cluster Arrival Times; Time [ns];Counts", 200, 0, 200);
+
+
 
     Long64_t nEvents = ch->GetEntries();
     cout << "Number of events: " << nEvents << endl;
@@ -245,10 +249,14 @@ void ecal_pi0calib(int run_start, int run_end) {
 
     for (Long64_t i = 0; i < nEvents; i++) {
         ch->GetEntry(i);
+        for (int icl = 0; icl < nclus; icl++) {
+            hClusTime->Fill(clus_a_time[icl]);
+        }
         if (i % 10000 == 0) {
             cout << "Processing event (correction) " << i << " / " << nEvents << "\r";
             cout.flush();
         }
+
         // Check that there are at least two clusters
         if (nclus < 2) continue;
         pass_clus++;
@@ -423,6 +431,10 @@ void ecal_pi0calib(int run_start, int run_end) {
  
     for (Long64_t i = 0; i < nEvents; i++) {
         ch->GetEntry(i);
+        for (int icl = 0; icl < nclus; icl++) {
+            hClusTime->Fill(clus_a_time[icl]);
+        }
+
         if (i % 10000 == 0) {
             cout << "Processing event (correction) " << i << " / " << nEvents << "\r";
             cout.flush();
@@ -519,6 +531,10 @@ void ecal_pi0calib(int run_start, int run_end) {
 
     for (Long64_t i = 0; i < nEvents; i++) {
         ch->GetEntry(i);
+        for (int icl = 0; icl < nclus; icl++) {
+            hClusTime->Fill(clus_a_time[icl]);
+        }
+
         cout << "Processing event " << i << "\r";
         if (nclus < 2) continue;
         pass_clus_corr++;
@@ -676,6 +692,12 @@ void ecal_pi0calib(int run_start, int run_end) {
     legE->Draw();
 
     cE->SaveAs(Form("plots/ecal_pi0_energy_%i_%i.png",run_start,run_end));
+
+
+    TCanvas *cTime = new TCanvas("cTime","Cluster Times",800,600);
+    hClusTime->Draw();
+    cTime->SaveAs(Form("plots/ecal_cluster_times_%i_%i.png", run_start, run_end));
+
 
     for(int val : UncalibratedCh)cout<<val<<", ";
     cout<<endl;

@@ -429,7 +429,7 @@ void LIGHTbest_MC_pair(
 
     if (nclus < 2) return; // need at least 2 clusters
 
-    // Find top 2 by energy
+    // Find top-2 by energy
     int imax1 = -1, imax2 = -1;
     double e1 = -1, e2 = -1;
 
@@ -445,11 +445,12 @@ void LIGHTbest_MC_pair(
     if (imax1 >= 0 && imax2 >= 0) {
         best_icl = imax1;
         best_jcl = imax2;
-        best_mass = e1 + e2; // placeholder mass is computed later
+        best_mass = e1 + e2; // placeholder: real mass is computed later
     }
 }
 
 
+// void My_Top2clus_ecal_pi0calib(int run_start, int run_end) {
 void MC_ecal_pi0calib() {
     //Moved to global 
     // const Double_t z_calo = 6; // position of calorimeter from the target in m
@@ -458,8 +459,8 @@ void MC_ecal_pi0calib() {
     // const Double_t vertex_z = z_target - z_origin;  // position of vertex, where the pi0 is created, right in the middle of the target
     // const double pi0_mass_pdg = 0.1349766;  // PDG pi0 mass in GeV
 
-    const int nbclusmax=100;    // max number of clusters
-    const int sizemax=1000;     // max size of the cluster (how many blocks in each cluster)
+    const int nbclusmax=100;    // maximum number of clusters
+    const int sizemax=1000;     // maximum size of the cluster (how many blocks in each cluster)
 
     TChain *ch = new TChain("T");
 
@@ -545,19 +546,19 @@ void MC_ecal_pi0calib() {
     
     TH2D *hMassVsX = new TH2D("hMassVsX",
     "MC Invariant Mass vs Cluster X;X position [m];M_{#pi^{0}} [GeV]",
-    100, -1.6, 1.6, 80, 0, 1.0);
+    100, -1.6, 1.6, 80, 0, .10);
 
     TH2D *hMassVsY = new TH2D("hMassVsY",
     "MC Invariant Mass vs Cluster Y;Y position [m];M_{#pi^{0}} [GeV]",
-    100, -0.6, 0.6, 80, 0,1.0);
+    100, -0.6, 0.6, 80, 0, .1);
     
     TH2D *hMassVsX_corr = new TH2D("hMassVsX_corr",
     "Corrected MC Invariant Mass vs Cluster X;X position [m];M_{#pi^{0}} [GeV]",
-    100, -1.6, 1.6, 80, 0, 1.0);
+    100, -1.6, 1.6, 80, 0, .10);
 
     TH2D *hMassVsY_corr = new TH2D("hMassVsY_corr",
     "Corrected MC Invariant Mass vs Cluster Y;Y position [m];M_{#pi^{0}} [GeV]",
-    100, -0.6, 0.6, 80, 0,1.0);
+    100, -0.6, 0.6, 80, 0, .1);
 
 
 
@@ -588,8 +589,7 @@ void MC_ecal_pi0calib() {
     std::set<int> blockIDs;
     std::map<int, int> blockID_to_row, blockID_to_col;
 
-    // for (Long64_t i = 0; i < nEvents/100; ++i) {
-    for (Long64_t i = 0; i < nEvents; ++i) {
+    for (Long64_t i = 0; i < nEvents/100; ++i) {
 
         cout << "Checking event : " << i << endl;
 
@@ -1114,8 +1114,7 @@ void MC_ecal_pi0calib() {
     TCanvas *cDt = new TCanvas("cDt","Photon Differences",0,0,1600,900);
     cDt->Divide(2,2);
     cDt->cd(1); 
-    // gPad->SetLogy(); 
-    hBestDt->Draw();
+    // gPad->SetLogy(); hBestDt->Draw();
     cDt->cd(2);
     hBestDx->Draw();
     cDt->cd(3); 
